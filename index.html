@@ -384,6 +384,30 @@
             50% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(1); opacity: 0; }
         }
+
+        /* 音乐控制按钮 */
+        .music-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .music-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 5px 8px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .music-btn.active {
+            background: #00b894;
+            border-color: #00b894;
+        }
     </style>
 </head>
 <body>
@@ -419,6 +443,12 @@
                 <button id="mode-classic" class="mode-btn active">经典模式</button>
                 <button id="mode-speed" class="mode-btn">极速模式</button>
                 <button id="mode-challenge" class="mode-btn">挑战模式</button>
+            </div>
+            
+            <!-- 音乐控制 -->
+            <div class="music-controls">
+                <button id="bgm-toggle" class="music-btn active">🎵 背景音乐</button>
+                <button id="sfx-toggle" class="music-btn active">🔊 音效</button>
             </div>
             
             <!-- 控制按钮区域 -->
@@ -479,6 +509,38 @@
             </div>
         </div>
     </div>
+
+    <!-- 音频元素 -->
+    <audio id="bgm" loop>
+        <source src="audio/background.mp3" type="audio/mpeg">
+        <source src="audio/background.ogg" type="audio/ogg">
+        您的浏览器不支持音频元素。
+    </audio>
+    
+    <audio id="rotate-sfx">
+        <source src="audio/rotate.mp3" type="audio/mpeg">
+        <source src="audio/rotate.ogg" type="audio/ogg">
+    </audio>
+    
+    <audio id="move-sfx">
+        <source src="audio/move.mp3" type="audio/mpeg">
+        <source src="audio/move.ogg" type="audio/ogg">
+    </audio>
+    
+    <audio id="clear-sfx">
+        <source src="audio/clear-line.mp3" type="audio/mpeg">
+        <source src="audio/clear-line.ogg" type="audio/ogg">
+    </audio>
+    
+    <audio id="drop-sfx">
+        <source src="audio/drop.mp3" type="audio/mpeg">
+        <source src="audio/drop.ogg" type="audio/ogg">
+    </audio>
+    
+    <audio id="gameover-sfx">
+        <source src="audio/game-over.mp3" type="audio/mpeg">
+        <source src="audio/game-over.ogg" type="audio/ogg">
+    </audio>
 
     <script>
         // 俄罗斯方块的所有形状定义
@@ -562,6 +624,10 @@
         let gameMode = 'classic'; // 游戏模式: classic, speed, challenge
         let timeLeft = 120; // 挑战模式时间(秒)
         let challengeTimer = null;
+
+        // 音乐状态
+        let bgmEnabled = true;
+        let sfxEnabled = true;
 
         // 初始化游戏板
         function initBoard() {
@@ -726,6 +792,8 @@
             currentPiece.x--;
             if (checkCollision(currentPiece, board)) {
                 currentPiece.x++;
+            } else {
+                playSound('move');
             }
             drawBoard();
         }
@@ -736,6 +804,8 @@
             currentPiece.x++;
             if (checkCollision(currentPiece, board)) {
                 currentPiece.x--;
+            } else {
+                playSound('move');
             }
             drawBoard();
         }
@@ -759,6 +829,7 @@
             while (movePieceDown()) {
                 // 持续下落直到不能移动
             }
+            playSound('drop');
         }
 
         function rotatePiece() {
@@ -787,6 +858,8 @@
                         currentPiece.shape = originalShape; // 恢复原形状
                     }
                 }
+            } else {
+                playSound('rotate');
             }
             drawBoard();
         }
@@ -855,6 +928,9 @@
                 updateDisplay();
                 updateDropInterval();
                 
+                // 播放消除行音效
+                playSound('clear');
+                
                 // 显示连击特效
                 showComboEffect(linesCleared);
             } else {
@@ -883,6 +959,11 @@
             isGameOver = true;
             clearInterval(dropInterval);
             if (challengeTimer) clearInterval(challengeTimer);
+            
+            // 停止背景音乐，播放游戏结束音效
+            stopBGM();
+            playSound('gameover');
+            
             document.getElementById('final-score').textContent = score;
             document.getElementById('game-over-modal').style.display = 'flex';
         }
@@ -926,6 +1007,9 @@
             nextPiece = getRandomPiece();
             drawNextPiece();
             
+            // 开始背景音乐
+            startBGM();
+            
             startDropInterval();
             drawBoard();
         }
@@ -939,6 +1023,9 @@
                 clearInterval(dropInterval);
                 if (challengeTimer) clearInterval(challengeTimer);
                 document.getElementById('pause-btn').textContent = '继续';
+                
+                // 暂停背景音乐
+                pauseBGM();
             } else {
                 startDropInterval();
                 if (gameMode === 'challenge') {
@@ -951,6 +1038,9 @@
                     }, 1000);
                 }
                 document.getElementById('pause-btn').textContent = '暂停';
+                
+                // 恢复背景音乐
+                resumeBGM();
             }
         }
 
@@ -972,6 +1062,9 @@
                 clearInterval(challengeTimer);
                 challengeTimer = null;
             }
+            
+            // 停止背景音乐
+            stopBGM();
             
             initBoard();
             updateDisplay();
@@ -1018,6 +1111,77 @@
                 modeText = `挑战模式 ${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2, '0')}`;
             }
             document.querySelector('.game-title').textContent = `🎮 ${modeText}`;
+        }
+
+        // 音乐控制功能
+        function startBGM() {
+            if (bgmEnabled) {
+                const bgm = document.getElementById('bgm');
+                bgm.currentTime = 0;
+                bgm.play().catch(e => console.log('背景音乐播放失败:', e));
+            }
+        }
+
+        function pauseBGM() {
+            const bgm = document.getElementById('bgm');
+            bgm.pause();
+        }
+
+        function resumeBGM() {
+            if (bgmEnabled) {
+                const bgm = document.getElementById('bgm');
+                bgm.play().catch(e => console.log('背景音乐播放失败:', e));
+            }
+        }
+
+        function stopBGM() {
+            const bgm = document.getElementById('bgm');
+            bgm.pause();
+            bgm.currentTime = 0;
+        }
+
+        function toggleBGM() {
+            bgmEnabled = !bgmEnabled;
+            const btn = document.getElementById('bgm-toggle');
+            
+            if (bgmEnabled) {
+                btn.classList.add('active');
+                if (!isPaused && !isGameOver) {
+                    startBGM();
+                }
+            } else {
+                btn.classList.remove('active');
+                pauseBGM();
+            }
+        }
+
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            const btn = document.getElementById('sfx-toggle');
+            
+            if (sfxEnabled) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function playSound(soundType) {
+            if (!sfxEnabled) return;
+            
+            const soundMap = {
+                'rotate': document.getElementById('rotate-sfx'),
+                'move': document.getElementById('move-sfx'),
+                'clear': document.getElementById('clear-sfx'),
+                'drop': document.getElementById('drop-sfx'),
+                'gameover': document.getElementById('gameover-sfx')
+            };
+            
+            const sound = soundMap[soundType];
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log(`${soundType}音效播放失败:`, e));
+            }
         }
 
         // 排行榜功能
@@ -1114,6 +1278,10 @@
             document.getElementById('mode-classic').addEventListener('click', () => setGameMode('classic'));
             document.getElementById('mode-speed').addEventListener('click', () => setGameMode('speed'));
             document.getElementById('mode-challenge').addEventListener('click', () => setGameMode('challenge'));
+            
+            // 音乐控制按钮
+            document.getElementById('bgm-toggle').addEventListener('click', toggleBGM);
+            document.getElementById('sfx-toggle').addEventListener('click', toggleSFX);
             
             // 移动端控制按钮事件
             document.querySelector('.left-btn').addEventListener('touchstart', function(e) {
