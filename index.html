@@ -2,44 +2,53 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>俄罗斯方块 - 移动端适配版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>俄罗斯方块 - 移动端优化版</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        body {
-            font-family: 'Arial', sans-serif;
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Arial', sans-serif;
             color: white;
-            text-align: center;
-            margin: 0;
-            padding: 10px;
-            min-height: 100vh;
-            overflow-x: hidden;
         }
 
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             padding: 10px;
         }
 
+        .header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
         h1 {
-            margin: 10px 0;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: #e94560;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            margin-bottom: 5px;
         }
 
         .game-area {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
+            flex: 1;
+            gap: 10px;
         }
 
         @media (min-width: 768px) {
@@ -51,7 +60,10 @@
         }
 
         .game-board-container {
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
         }
 
         .game-board {
@@ -59,6 +71,8 @@
             background: #0f3460;
             border-radius: 5px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            max-height: 70vh;
         }
 
         .side-panel {
@@ -71,8 +85,8 @@
         }
 
         .score-display {
-            font-size: 1.2rem;
-            margin: 10px 0;
+            font-size: 1.1rem;
+            margin: 8px 0;
             display: flex;
             justify-content: space-between;
         }
@@ -95,7 +109,7 @@
             cursor: pointer;
             transition: all 0.2s;
             flex: 1;
-            min-width: 120px;
+            min-width: 100px;
         }
 
         button:hover, button:active {
@@ -109,7 +123,7 @@
         }
 
         .next-piece-label {
-            font-size: 1.1rem;
+            font-size: 1rem;
             margin-bottom: 5px;
         }
 
@@ -148,9 +162,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             margin-top: 20px;
             width: 100%;
+            padding: 10px 0;
         }
 
         @media (min-width: 768px) {
@@ -162,7 +177,7 @@
         .mobile-row {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
         }
 
@@ -173,11 +188,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             background: rgba(233, 69, 96, 0.8);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .mobile-btn:active {
@@ -187,7 +202,7 @@
 
         .mobile-center {
             display: flex;
-            gap: 30px;
+            gap: 40px;
         }
 
         .rotate-btn {
@@ -204,6 +219,14 @@
 
         .drop-btn:active {
             background: rgba(0, 240, 0, 1);
+        }
+
+        .hard-drop-btn {
+            background: rgba(240, 165, 0, 0.8);
+        }
+
+        .hard-drop-btn:active {
+            background: rgba(240, 165, 0, 1);
         }
 
         /* 游戏结束弹窗 */
@@ -257,12 +280,14 @@
 
         /* 游戏说明 */
         .instructions {
-            margin-top: 20px;
+            margin-top: 15px;
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             text-align: left;
             font-size: 0.9rem;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
         .instructions h3 {
@@ -290,7 +315,9 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎮 俄罗斯方块 - 移动端适配版</h1>
+        <div class="header">
+            <h1>🎮 俄罗斯方块 - 移动端优化版</h1>
+        </div>
         
         <div class="game-area">
             <div class="game-board-container">
@@ -345,17 +372,16 @@
                         <!-- 排行榜项目将通过JS动态生成 -->
                     </div>
                 </div>
+                
+                <div class="instructions">
+                    <h3>游戏说明</h3>
+                    <ul>
+                        <li><strong>电脑端:</strong> WASD键或方向键控制</li>
+                        <li><strong>手机端:</strong> 使用下方控制按钮或手势操作</li>
+                        <li><strong>手势:</strong> 滑动控制移动，长按快速下落</li>
+                    </ul>
+                </div>
             </div>
-        </div>
-        
-        <div class="instructions">
-            <h3>游戏说明</h3>
-            <ul>
-                <li><strong>电脑端操作:</strong> 方向键 ← → 移动，↑ 旋转，↓ 加速下落，空格键快速下落</li>
-                <li><strong>手机端操作:</strong> 使用下方控制按钮或手势操作</li>
-                <li><strong>手势操作:</strong> 向左/右滑动移动方块，向上滑动旋转，向下滑动加速下落，长按快速下落</li>
-                <li>消除行数越多，得分越高。每消除10行提升一个等级，下落速度加快</li>
-            </ul>
         </div>
     </div>
 
@@ -373,6 +399,23 @@
     </div>
 
     <script>
+        // 防止页面滚动和缩放
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
+        });
+
         // 俄罗斯方块的所有形状定义
         const TETROMINOES = {
             I: {
@@ -448,6 +491,7 @@
         let dropInterval = null;
         let touchStartX = 0;
         let touchStartY = 0;
+        let lastTapTime = 0;
 
         // 初始化游戏板
         function initBoard() {
@@ -927,11 +971,26 @@
             // 触摸手势支持
             const gameBoard = document.getElementById('board');
             gameBoard.addEventListener('touchstart', function(e) {
+                e.preventDefault();
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
+                
+                // 检测双击
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                if (tapLength < 300 && tapLength > 0) {
+                    // 双击事件 - 旋转方块
+                    rotatePiece();
+                }
+                lastTapTime = currentTime;
+            });
+            
+            gameBoard.addEventListener('touchmove', function(e) {
+                e.preventDefault();
             });
             
             gameBoard.addEventListener('touchend', function(e) {
+                e.preventDefault();
                 const touchEndX = e.changedTouches[0].clientX;
                 const touchEndY = e.changedTouches[0].clientY;
                 
@@ -979,15 +1038,19 @@
                 if (isPaused || isGameOver) return;
                 
                 switch(event.code) {
+                    case 'KeyA': // A键 - 左移
                     case 'ArrowLeft':
                         movePieceLeft();
                         break;
+                    case 'KeyD': // D键 - 右移
                     case 'ArrowRight':
                         movePieceRight();
                         break;
+                    case 'KeyS': // S键 - 加速下落
                     case 'ArrowDown':
                         movePieceDown();
                         break;
+                    case 'KeyW': // W键 - 旋转
                     case 'ArrowUp':
                         rotatePiece();
                         break;
